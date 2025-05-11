@@ -7,23 +7,32 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import java.io.File;
 
 public class BotConfig {
-    private static final String CONFIG_FILE = "config.properties";
-    private static Configuration config;
+    private static String botToken;
+    private static String botUsername;
+    private static String webAppUrl;
 
     static {
         try {
             Configurations configs = new Configurations();
-            config = configs.properties(new File("src/main/resources/" + CONFIG_FILE));
+            Configuration config = configs.properties(new File("src/main/resources/config.properties"));
+            
+            botToken = config.getString("bot.token");
+            botUsername = config.getString("bot.username");
+            webAppUrl = config.getString("webapp.url");
         } catch (ConfigurationException e) {
-            throw new RuntimeException("Ошибка загрузки конфигурации", e);
+            e.printStackTrace();
         }
     }
 
     public static String getBotToken() {
-        return config.getString("bot.token");
+        return botToken;
     }
 
     public static String getBotUsername() {
-        return config.getString("bot.username");
+        return botUsername;
+    }
+
+    public static String getWebAppUrl() {
+        return webAppUrl;
     }
 } 
