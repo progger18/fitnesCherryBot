@@ -5,59 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fitness Assistant</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>Fitness Assistant</h1>
-        </div>
+        <h1>Fitness Assistant</h1>
         
-        <div class="main-content">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">📊 Калькулятор ИМТ</h5>
-                    <div class="input-group mb-3">
-                        <input type="number" id="weight" class="form-control" placeholder="Вес (кг)">
-                        <input type="number" id="height" class="form-control" placeholder="Рост (см)">
-                        <button class="btn btn-primary" onclick="calculateBMI()">Рассчитать</button>
-                    </div>
-                    <div id="bmiResult" class="mt-3"></div>
-                </div>
+        <section>
+            <h2>Калькулятор ИМТ</h2>
+            <div class="input-group">
+                <input type="number" id="weight" placeholder="Вес (кг)" min="30" max="200">
+                <input type="number" id="height" placeholder="Рост (см)" min="100" max="250">
+                <button onclick="calculateBMI()">Рассчитать</button>
             </div>
+            <div id="bmiResult" class="result"></div>
+        </section>
 
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">💪 План тренировок</h5>
-                    <select class="form-select mb-3" id="trainingLevel">
-                        <option value="beginner">Начинающий</option>
-                        <option value="intermediate">Средний</option>
-                        <option value="advanced">Продвинутый</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="getTrainingPlan()">Получить план</button>
-                    <div id="trainingPlan" class="mt-3"></div>
-                </div>
+        <section>
+            <h2>Расчет калорий</h2>
+            <div class="input-group">
+                <input type="number" id="age" placeholder="Возраст" min="16" max="100">
+                <select id="activityLevel">
+                    <option value="sedentary">Малоподвижный образ жизни</option>
+                    <option value="light">Легкая активность (1-3 раза в неделю)</option>
+                    <option value="moderate">Умеренная активность (3-5 раз в неделю)</option>
+                    <option value="active">Высокая активность (6-7 раз в неделю)</option>
+                    <option value="very_active">Очень высокая активность (2 раза в день)</option>
+                </select>
+                <select id="goal">
+                    <option value="lose">Похудение</option>
+                    <option value="maintain">Поддержание веса</option>
+                    <option value="gain">Набор массы</option>
+                </select>
+                <button onclick="calculateDailyCalories()">Рассчитать</button>
             </div>
+            <div id="caloriesResult" class="result"></div>
+        </section>
 
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">🍎 План питания</h5>
-                    <button class="btn btn-primary" onclick="getNutritionPlan()">Получить план питания</button>
-                    <div id="nutritionPlan" class="mt-3"></div>
-                </div>
+        <section>
+            <h2>План тренировок</h2>
+            <div class="input-group">
+                <select id="trainingLevel">
+                    <option value="beginner">Начинающий</option>
+                    <option value="intermediate">Средний</option>
+                    <option value="advanced">Продвинутый</option>
+                </select>
+                <button onclick="getTrainingPlan()">Получить план</button>
             </div>
+            <div id="trainingPlan" class="result"></div>
+        </section>
 
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">💭 Мотивация</h5>
-                    <button class="btn btn-primary" onclick="getMotivationalQuote()">Получить мотивацию</button>
-                    <div id="motivationalQuote" class="mt-3"></div>
-                </div>
+        <section>
+            <h2>План питания</h2>
+            <div class="input-group">
+                <button onclick="getNutritionPlan()">Показать рекомендации</button>
             </div>
-        </div>
+            <div id="nutritionPlan" class="result"></div>
+        </section>
+
+        <section>
+            <h2>Мотивация</h2>
+            <div class="input-group">
+                <button onclick="getMotivationalQuote()">Получить цитату</button>
+            </div>
+            <div id="motivationalQuote" class="result"></div>
+        </section>
     </div>
-
     <script src="app.js"></script>
 </body>
 </html> 

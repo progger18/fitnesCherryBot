@@ -1,7 +1,6 @@
 package main;
 
 import lombok.extern.slf4j.Slf4j;
-import main.config.BotConfig;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -17,14 +16,25 @@ import java.util.List;
 @Slf4j
 public class FitnessBot extends TelegramLongPollingBot {
 
+    private final String botToken;
+    private final String botUsername;
+    private final String webAppUrl;
+
+    public FitnessBot(String botToken, String botUsername, String webAppUrl) {
+        super(botToken);
+        this.botToken = botToken;
+        this.botUsername = botUsername;
+        this.webAppUrl = webAppUrl;
+    }
+
     @Override
     public String getBotUsername() {
-        return BotConfig.getBotUsername();
+        return botUsername;
     }
 
     @Override
     public String getBotToken() {
-        return BotConfig.getBotToken();
+        return botToken;
     }
 
     @Override
@@ -114,7 +124,7 @@ public class FitnessBot extends TelegramLongPollingBot {
         
         InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText("Открыть приложение");
-        button.setWebApp(new org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo(BotConfig.getWebAppUrl()));
+        button.setWebApp(new org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo(webAppUrl));
         row.add(button);
         
         keyboard.add(row);

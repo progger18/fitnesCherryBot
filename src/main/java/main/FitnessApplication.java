@@ -19,9 +19,4 @@ public class FitnessApplication {
         botsApi.registerBot(fitnessBot);
         return botsApi;
     }
-
-    @Bean
-    public FitnessBot fitnessBot() {
-        return new FitnessBot();
-    }
 } 
