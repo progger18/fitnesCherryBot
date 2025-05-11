@@ -1,4 +1,5 @@
 [build]
+  base = "."
   command = "mvn clean package"
   publish = "target/classes/static"
 
