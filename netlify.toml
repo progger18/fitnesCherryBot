@@ -1,6 +1,6 @@
 [build]
   base = "."
-  command = "./mvnw clean package"
+  command = "chmod +x ./mvnw && ./mvnw clean package"
   publish = "target/classes/static"
 
 [build.environment]
