@@ -5,8 +5,8 @@ import main.config.BotConfig;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
@@ -14,6 +14,8 @@ import java.util.List;
 
 @Slf4j
 public class FitnessBot extends TelegramLongPollingBot {
+    private static final String WEBAPP_URL = "https://your-domain.com"; // Замените на ваш домен
+
     @Override
     public String getBotUsername() {
         return BotConfig.getBotUsername();
@@ -30,28 +32,8 @@ public class FitnessBot extends TelegramLongPollingBot {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
 
-            switch (messageText) {
-                case "/start":
-                    sendStartMessage(chatId);
-                    break;
-                case "📊 Рассчитать ИМТ":
-                    sendMessage(chatId, "Введите ваш вес в кг и рост в см через пробел (например: 70 175)");
-                    break;
-                case "💪 План тренировок":
-                    sendTrainingPlan(chatId);
-                    break;
-                case "🍎 Питание":
-                    sendNutritionInfo(chatId);
-                    break;
-                case "💭 Мотивация":
-                    sendMotivationalQuote(chatId);
-                    break;
-                default:
-                    if (messageText.matches("\\d+\\s+\\d+")) {
-                        calculateBMI(chatId, messageText);
-                    } else {
-                        sendMessage(chatId, "Пожалуйста, используйте кнопки меню для навигации");
-                    }
+            if (messageText.equals("/start")) {
+                sendStartMessage(chatId);
             }
         }
     }
@@ -60,26 +42,20 @@ public class FitnessBot extends TelegramLongPollingBot {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText("Добро пожаловать в Fitness Assistant Bot! 🏋️‍♂️\n\n" +
-                "Я помогу вам:\n" +
-                "📊 Рассчитать ИМТ\n" +
-                "💪 Составить план тренировок\n" +
-                "🍎 Создать план питания\n" +
-                "💭 Поднять мотивацию\n\n" +
-                "Выберите нужный пункт меню:");
+                "Нажмите кнопку ниже, чтобы открыть приложение:");
 
-        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-        List<KeyboardRow> keyboard = new ArrayList<>();
-        KeyboardRow row1 = new KeyboardRow();
-        row1.add("📊 Рассчитать ИМТ");
-        row1.add("💪 План тренировок");
-        KeyboardRow row2 = new KeyboardRow();
-        row2.add("🍎 Питание");
-        row2.add("💭 Мотивация");
-        keyboard.add(row1);
-        keyboard.add(row2);
-        keyboardMarkup.setKeyboard(keyboard);
-        keyboardMarkup.setResizeKeyboard(true);
-        message.setReplyMarkup(keyboardMarkup);
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText("Открыть приложение");
+        button.setWebApp(new org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo(WEBAPP_URL));
+        row.add(button);
+        
+        keyboard.add(row);
+        markup.setKeyboard(keyboard);
+        message.setReplyMarkup(markup);
 
         try {
             execute(message);
