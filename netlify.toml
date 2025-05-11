@@ -1,6 +1,6 @@
 [build]
   base = "."
-  command = "mvn clean package"
+  command = "./mvnw clean package"
   publish = "target/classes/static"
 
 [build.environment]
