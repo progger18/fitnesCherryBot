@@ -5,4 +5,8 @@
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200 
+  status = 200
+
+[build.environment]
+  JAVA_VERSION = "17"
+  MAVEN_VERSION = "3.9.5" 
