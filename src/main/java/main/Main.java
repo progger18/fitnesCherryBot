@@ -12,7 +12,7 @@ public class Main {
 
             // Создаем экземпляр бота
             FitnessBot bot = new FitnessBot(
-                "7634862416:AAHX6AWT5joXKO8n_BHT69zYMcNUIm_TJlc",
+                "YOUR_BOT_TOKEN",
                 "FitnessCherryBot",
                 "https://fitnescherrybot.netlify.app"
             );

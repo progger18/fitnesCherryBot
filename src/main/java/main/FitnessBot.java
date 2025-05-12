@@ -4,7 +4,9 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
@@ -45,22 +47,36 @@ public class FitnessBot extends TelegramLongPollingBot {
                     sendHelpMessage(chatId);
                     break;
                 case "🌐 Открыть приложение":
-                    sendWebAppButton(chatId);
+                    SendMessage webAppMessage = new SendMessage();
+                    webAppMessage.setChatId(chatId);
+                    webAppMessage.setText("Нажмите кнопку ниже, чтобы открыть веб-приложение:");
+                    webAppMessage.setReplyMarkup(createWebAppKeyboard());
+                    try {
+                        execute(webAppMessage);
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "💪 План тренировок":
-                    sendTrainingPlan(chatId);
+                    sendTrainingLevelKeyboard(chatId);
                     break;
                 case "🥗 План питания":
                     sendNutritionPlan(chatId);
                     break;
                 case "📊 Калькулятор ИМТ":
-                    sendBMICalculator(chatId);
+                    sendBMICalculatorInstructions(chatId);
                     break;
                 case "🔥 Мотивация":
                     sendMotivationalQuote(chatId);
                     break;
                 default:
-                    sendDefaultMessage(chatId);
+                    if (messageText.matches("\\d+\\s+\\d+")) {
+                        calculateBMI(chatId, messageText);
+                    } else if (messageText.matches("[1-3]")) {
+                        sendTrainingPlan(chatId, messageText);
+                    } else {
+                        sendDefaultMessage(chatId);
+                    }
             }
         }
     }
@@ -72,12 +88,14 @@ public class FitnessBot extends TelegramLongPollingBot {
                 "• Создать персональный план тренировок\n" +
                 "• Составить план питания\n" +
                 "• Поддерживать мотивацию\n\n" +
-                "Используй команды меню или нажми кнопку ниже, чтобы открыть веб-приложение.";
+                "Выбери нужный пункт меню или используй команды:\n" +
+                "/start - Начать работу\n" +
+                "/help - Показать справку";
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(welcomeText);
-        message.setReplyMarkup(createMainMenuKeyboard());
+        message.setReplyMarkup(createMainKeyboard());
         
         try {
             execute(message);
@@ -90,15 +108,24 @@ public class FitnessBot extends TelegramLongPollingBot {
         String helpText = "📋 Доступные команды:\n\n" +
                 "/start - Начать работу с ботом\n" +
                 "/help - Показать это сообщение\n\n" +
-                "🌐 Открыть приложение - Открыть веб-интерфейс\n" +
-                "💪 План тренировок - Получить план тренировок\n" +
-                "🥗 План питания - Получить план питания\n" +
-                "📊 Калькулятор ИМТ - Рассчитать ИМТ\n" +
-                "🔥 Мотивация - Получить мотивационную цитату";
+                "Как пользоваться ботом:\n\n" +
+                "1. Расчет ИМТ:\n" +
+                "   • Нажмите '📊 Калькулятор ИМТ'\n" +
+                "   • Введите вес и рост через пробел (например: 70 175)\n\n" +
+                "2. План тренировок:\n" +
+                "   • Нажмите '💪 План тренировок'\n" +
+                "   • Выберите уровень подготовки (1-3)\n\n" +
+                "3. План питания:\n" +
+                "   • Нажмите '🥗 План питания'\n" +
+                "   • Получите рекомендации по питанию\n\n" +
+                "4. Мотивация:\n" +
+                "   • Нажмите '🔥 Мотивация'\n" +
+                "   • Получите мотивационную цитату";
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(helpText);
+        message.setReplyMarkup(createMainKeyboard());
         
         try {
             execute(message);
@@ -107,30 +134,106 @@ public class FitnessBot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendWebAppButton(long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Нажмите кнопку ниже, чтобы открыть веб-приложение:");
-        message.setReplyMarkup(createWebAppKeyboard());
-        
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void sendTrainingPlan(long chatId) {
-        String trainingText = "Выберите ваш уровень подготовки:\n\n" +
+    private void sendTrainingLevelKeyboard(long chatId) {
+        String text = "Выберите ваш уровень подготовки:\n\n" +
                 "1️⃣ Начинающий\n" +
                 "2️⃣ Средний\n" +
                 "3️⃣ Продвинутый\n\n" +
-                "Для получения подробного плана тренировок, пожалуйста, используйте веб-приложение.";
+                "Отправьте цифру (1-3) для получения плана тренировок.";
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText(trainingText);
-        message.setReplyMarkup(createWebAppKeyboard());
+        message.setText(text);
+        
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendTrainingPlan(long chatId, String level) {
+        String plan;
+        switch (level) {
+            case "1":
+                plan = "🏋️‍♂️ План для начинающих:\n\n" +
+                        "Понедельник (Ноги и ягодицы):\n" +
+                        "1. Приседания: 3 подхода по 10 повторений\n" +
+                        "2. Выпады: 3 подхода по 8 повторений на каждую ногу\n" +
+                        "3. Подъемы на носки: 3 подхода по 15 повторений\n" +
+                        "4. Планка: 3 подхода по 20 секунд\n\n" +
+                        "Среда (Верхняя часть тела):\n" +
+                        "1. Отжимания: 3 подхода по 5 повторений\n" +
+                        "2. Тяга гантелей: 3 подхода по 10 повторений\n" +
+                        "3. Подъемы рук: 3 подхода по 12 повторений\n" +
+                        "4. Планка: 3 подхода по 20 секунд\n\n" +
+                        "Пятница (Кардио и кор):\n" +
+                        "1. Прыжки на скакалке: 3 подхода по 1 минуте\n" +
+                        "2. Берпи: 3 подхода по 5 повторений\n" +
+                        "3. Скручивания: 3 подхода по 12 повторений\n" +
+                        "4. Планка: 3 подхода по 20 секунд\n\n" +
+                        "Рекомендации:\n" +
+                        "• Отдых между подходами: 60-90 секунд\n" +
+                        "• Пейте воду во время тренировки\n" +
+                        "• Следите за техникой выполнения";
+                break;
+            case "2":
+                plan = "🏋️‍♂️ План для среднего уровня:\n\n" +
+                        "Понедельник (Ноги):\n" +
+                        "1. Приседания со штангой: 4 подхода по 12 повторений\n" +
+                        "2. Выпады с гантелями: 4 подхода по 10 повторений\n" +
+                        "3. Жим ногами: 4 подхода по 12 повторений\n" +
+                        "4. Подъемы на носки: 4 подхода по 15 повторений\n\n" +
+                        "Среда (Грудь и трицепс):\n" +
+                        "1. Жим штанги лежа: 4 подхода по 10 повторений\n" +
+                        "2. Разведение гантелей: 4 подхода по 12 повторений\n" +
+                        "3. Отжимания на брусьях: 4 подхода по 10 повторений\n" +
+                        "4. Разгибания рук: 4 подхода по 12 повторений\n\n" +
+                        "Пятница (Спина и бицепс):\n" +
+                        "1. Подтягивания: 4 подхода по 8 повторений\n" +
+                        "2. Тяга верхнего блока: 4 подхода по 12 повторений\n" +
+                        "3. Тяга гантели в наклоне: 4 подхода по 10 повторений\n" +
+                        "4. Сгибания рук: 4 подхода по 12 повторений\n\n" +
+                        "Рекомендации:\n" +
+                        "• Отдых между подходами: 45-60 секунд\n" +
+                        "• Добавьте кардио 2-3 раза в неделю\n" +
+                        "• Следите за прогрессом";
+                break;
+            case "3":
+                plan = "🏋️‍♂️ План для продвинутых:\n\n" +
+                        "Понедельник (Ноги):\n" +
+                        "1. Приседания со штангой: 5 подходов по 8 повторений\n" +
+                        "2. Румынская тяга: 5 подходов по 8 повторений\n" +
+                        "3. Выпады с гантелями: 4 подхода по 10 повторений\n" +
+                        "4. Жим ногами: 4 подхода по 10 повторений\n\n" +
+                        "Вторник (Грудь и трицепс):\n" +
+                        "1. Жим штанги лежа: 5 подходов по 6-8 повторений\n" +
+                        "2. Жим гантелей на наклонной скамье: 4 подхода по 8 повторений\n" +
+                        "3. Разведение гантелей: 4 подхода по 12 повторений\n" +
+                        "4. Отжимания на брусьях: 4 подхода по 10 повторений\n\n" +
+                        "Четверг (Спина и бицепс):\n" +
+                        "1. Становая тяга: 5 подходов по 6 повторений\n" +
+                        "2. Подтягивания: 4 подхода по 8-10 повторений\n" +
+                        "3. Тяга верхнего блока: 4 подхода по 10 повторений\n" +
+                        "4. Тяга гантели в наклоне: 4 подхода по 10 повторений\n\n" +
+                        "Пятница (Плечи и руки):\n" +
+                        "1. Жим штанги над головой: 5 подходов по 8 повторений\n" +
+                        "2. Разведение гантелей: 4 подхода по 12 повторений\n" +
+                        "3. Тяга к подбородку: 4 подхода по 10 повторений\n" +
+                        "4. Сгибания рук: 4 подхода по 10 повторений\n\n" +
+                        "Рекомендации:\n" +
+                        "• Отдых между подходами: 30-45 секунд\n" +
+                        "• Используйте дроп-сеты и суперсеты\n" +
+                        "• Добавьте кардио 3-4 раза в неделю";
+                break;
+            default:
+                plan = "Пожалуйста, выберите уровень подготовки (1-3)";
+        }
+
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(plan);
+        message.setReplyMarkup(createMainKeyboard());
         
         try {
             execute(message);
@@ -140,13 +243,38 @@ public class FitnessBot extends TelegramLongPollingBot {
     }
 
     private void sendNutritionPlan(long chatId) {
-        String nutritionText = "Для получения подробного плана питания с калорийностью и макронутриентами, " +
-                "пожалуйста, используйте веб-приложение.";
+        String nutritionText = "🥗 Рекомендации по питанию:\n\n" +
+                "🥩 Белки:\n" +
+                "• Куриная грудка (100г) - 165 ккал, 31г белка\n" +
+                "• Лосось (100г) - 208 ккал, 22г белка\n" +
+                "• Яйца (1 шт) - 70 ккал, 6г белка\n" +
+                "• Творог 5% (100г) - 121 ккал, 17г белка\n\n" +
+                "🌾 Углеводы:\n" +
+                "• Коричневый рис (100г) - 112 ккал\n" +
+                "• Овсянка (100г) - 68 ккал\n" +
+                "• Киноа (100г) - 120 ккал\n" +
+                "• Сладкий картофель (100г) - 86 ккал\n\n" +
+                "🥑 Жиры:\n" +
+                "• Авокадо (100г) - 160 ккал\n" +
+                "• Миндаль (100г) - 576 ккал\n" +
+                "• Оливковое масло (1 ст.л) - 120 ккал\n" +
+                "• Жирная рыба (100г) - 208 ккал\n\n" +
+                "🥬 Овощи:\n" +
+                "• Брокколи (100г) - 34 ккал\n" +
+                "• Шпинат (100г) - 23 ккал\n" +
+                "• Болгарский перец (100г) - 31 ккал\n" +
+                "• Цукини (100г) - 17 ккал\n\n" +
+                "Рекомендации:\n" +
+                "• Белки: 1.6-2.2г на кг веса\n" +
+                "• Жиры: 0.8-1г на кг веса\n" +
+                "• Углеводы: 3-5г на кг веса\n" +
+                "• Пейте 2-3 литра воды в день\n" +
+                "• Питайтесь 4-6 раз в день";
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(nutritionText);
-        message.setReplyMarkup(createWebAppKeyboard());
+        message.setReplyMarkup(createMainKeyboard());
         
         try {
             execute(message);
@@ -155,14 +283,54 @@ public class FitnessBot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendBMICalculator(long chatId) {
-        String bmiText = "Для расчета ИМТ и получения персональных рекомендаций, " +
-                "пожалуйста, используйте веб-приложение.";
+    private void sendBMICalculatorInstructions(long chatId) {
+        String text = "📊 Калькулятор ИМТ\n\n" +
+                "Введите ваш вес в кг и рост в см через пробел.\n" +
+                "Например: 70 175";
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText(bmiText);
-        message.setReplyMarkup(createWebAppKeyboard());
+        message.setText(text);
+        
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void calculateBMI(long chatId, String messageText) {
+        String[] parts = messageText.split("\\s+");
+        double weight = Double.parseDouble(parts[0]);
+        double height = Double.parseDouble(parts[1]) / 100; // конвертируем см в метры
+
+        double bmi = weight / (height * height);
+        String category;
+        String recommendations;
+
+        if (bmi < 18.5) {
+            category = "Недостаточный вес";
+            recommendations = "• Увеличьте калорийность рациона\n• Добавьте силовые тренировки\n• Питайтесь чаще";
+        } else if (bmi < 25) {
+            category = "Нормальный вес";
+            recommendations = "• Поддерживайте текущий режим\n• Регулярно тренируйтесь\n• Сбалансированно питайтесь";
+        } else if (bmi < 30) {
+            category = "Избыточный вес";
+            recommendations = "• Создайте дефицит калорий\n• Добавьте кардио тренировки\n• Уменьшите потребление простых углеводов";
+        } else {
+            category = "Ожирение";
+            recommendations = "• Обязательно проконсультируйтесь с врачом\n• Начните с легких кардио тренировок\n• Строго следите за питанием";
+        }
+
+        String response = String.format("📊 Результаты расчета ИМТ:\n\n" +
+                "Ваш ИМТ: %.1f\n" +
+                "Категория: %s\n\n" +
+                "Рекомендации:\n%s", bmi, category, recommendations);
+
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(response);
+        message.setReplyMarkup(createMainKeyboard());
         
         try {
             execute(message);
@@ -195,6 +363,7 @@ public class FitnessBot extends TelegramLongPollingBot {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(randomQuote);
+        message.setReplyMarkup(createMainKeyboard());
         
         try {
             execute(message);
@@ -204,12 +373,12 @@ public class FitnessBot extends TelegramLongPollingBot {
     }
 
     private void sendDefaultMessage(long chatId) {
-        String defaultText = "Пожалуйста, используйте команды меню или веб-приложение для взаимодействия с ботом.";
+        String defaultText = "Пожалуйста, используйте кнопки меню для навигации.";
         
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(defaultText);
-        message.setReplyMarkup(createMainMenuKeyboard());
+        message.setReplyMarkup(createMainKeyboard());
         
         try {
             execute(message);
@@ -218,48 +387,28 @@ public class FitnessBot extends TelegramLongPollingBot {
         }
     }
 
-    private InlineKeyboardMarkup createMainMenuKeyboard() {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+    private ReplyKeyboardMarkup createMainKeyboard() {
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        List<KeyboardRow> keyboard = new ArrayList<>();
         
-        List<InlineKeyboardButton> row1 = new ArrayList<>();
-        InlineKeyboardButton webAppButton = new InlineKeyboardButton();
-        webAppButton.setText("🌐 Открыть приложение");
-        webAppButton.setWebApp(new org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo(webAppUrl));
-        row1.add(webAppButton);
+        KeyboardRow row1 = new KeyboardRow();
+        row1.add("💪 План тренировок");
+        row1.add("🥗 План питания");
         
-        List<InlineKeyboardButton> row2 = new ArrayList<>();
-        InlineKeyboardButton trainingButton = new InlineKeyboardButton();
-        trainingButton.setText("💪 План тренировок");
-        trainingButton.setCallbackData("training");
-        row2.add(trainingButton);
+        KeyboardRow row2 = new KeyboardRow();
+        row2.add("📊 Калькулятор ИМТ");
+        row2.add("🔥 Мотивация");
         
-        List<InlineKeyboardButton> row3 = new ArrayList<>();
-        InlineKeyboardButton nutritionButton = new InlineKeyboardButton();
-        nutritionButton.setText("🥗 План питания");
-        nutritionButton.setCallbackData("nutrition");
-        row3.add(nutritionButton);
+        KeyboardRow row3 = new KeyboardRow();
+        row3.add("🌐 Открыть приложение");
         
-        List<InlineKeyboardButton> row4 = new ArrayList<>();
-        InlineKeyboardButton bmiButton = new InlineKeyboardButton();
-        bmiButton.setText("📊 Калькулятор ИМТ");
-        bmiButton.setCallbackData("bmi");
-        row4.add(bmiButton);
+        keyboard.add(row1);
+        keyboard.add(row2);
+        keyboard.add(row3);
         
-        List<InlineKeyboardButton> row5 = new ArrayList<>();
-        InlineKeyboardButton motivationButton = new InlineKeyboardButton();
-        motivationButton.setText("🔥 Мотивация");
-        motivationButton.setCallbackData("motivation");
-        row5.add(motivationButton);
-        
-        rows.add(row1);
-        rows.add(row2);
-        rows.add(row3);
-        rows.add(row4);
-        rows.add(row5);
-        
-        markup.setKeyboard(rows);
-        return markup;
+        keyboardMarkup.setKeyboard(keyboard);
+        keyboardMarkup.setResizeKeyboard(true);
+        return keyboardMarkup;
     }
 
     private InlineKeyboardMarkup createWebAppKeyboard() {
